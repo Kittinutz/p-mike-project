@@ -18,7 +18,9 @@ import getTrendlines from "../Utils/getTrendlines";
 import ErrorTable from "../components/ErrorTable";
 import NodeResultTable from "../components/NodeResultTable";
 import { Link } from "react-router-dom";
-import { findCenter, separateNineZone, separateZone } from "../Utils/separateNode";
+import { separateNineZone } from "../Utils/separateNode";
+import ZoneTable from "../components/ZoneTable";
+import ButtonExportExel from "./ButtonGroupExportExcel";
 
 const memoizeCalCulateAttitude = memoize(calCulateAttitude);
 class NodeWithSeparate extends Component {
@@ -33,6 +35,8 @@ class NodeWithSeparate extends Component {
       sill: "",
       range: "",
     },
+    zones: [],
+    slove: ''
   };
 
   addNode = () => {
@@ -107,6 +111,9 @@ class NodeWithSeparate extends Component {
       loading: !loading,
     });
     const zone = separateNineZone(nodes);
+    this.setState({
+      zones: zone
+    })
     const key = Object.keys(zone);
     const newNode = [];
     const allRangeOfNodesTemp = [];
@@ -168,6 +175,14 @@ class NodeWithSeparate extends Component {
       },
     });
   };
+
+  onSloveChange = (value) => {
+    this.setState({
+      ...this.state,
+      slove: value
+    })
+  }
+
   render() {
     const {
       nodes,
@@ -177,6 +192,8 @@ class NodeWithSeparate extends Component {
       semiVarioGram,
       model = "exponential",
       variable,
+      zones,
+      slove
     } = this.state;
     const transformDataNode = nodes.sort((a, b) => {
       if (a.id > b.id) {
@@ -216,6 +233,7 @@ class NodeWithSeparate extends Component {
       vAxis: { title: 'Semivariance' },
       hAxis: { title: 'Distance' },
     };
+
     return (
       <div className="container-graph">
         {loading && (
@@ -340,24 +358,10 @@ class NodeWithSeparate extends Component {
           <button onClick={this.addNode}>ADD NODE</button>
           <button onClick={this.onSubmit}>Submit</button>
           {error && (
-            <div className="wrapper-export-excel">
-              <ReactHTMLTableToExcel
-                id="table-calculate-node-result-button"
-                className="download-table-xls-button"
-                table="table-calculate-node-result"
-                filename="prediction_calculate_result"
-                sheet="prediction_calculate_result"
-                buttonText="Download as prediction"
-              />
-              <ReactHTMLTableToExcel
-                id="test-table-xls-button"
-                className="download-table-xls-button"
-                table="error-table"
-                filename="errorSheet"
-                sheet="ErrorSheetxls"
-                buttonText="Download as errors report"
-              />
-            </div>
+            <ButtonExportExel
+              onSloveChange={this.onSloveChange}
+            />
+
           )}
         </div>
 
@@ -524,6 +528,15 @@ class NodeWithSeparate extends Component {
               legendToggle
             />
           )}
+
+          <ZoneTable
+            zones={zones}
+            nodes={transformDataNode}
+            isShowConstant={
+              !!variable.nugget && !!variable.sill && !!variable.range
+            }
+            inputSlove={slove}
+          />
         </div>
       </div>
     );
